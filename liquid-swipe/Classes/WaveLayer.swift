@@ -29,12 +29,21 @@ internal class WaveLayer: CAShapeLayer {
         super.init(layer: layer)
     }
     
-    init(waveCenterY: CGFloat, waveHorRadius: CGFloat, waveVertRadius: CGFloat, sideWidth: CGFloat) {
+    init(
+        waveCenterY: CGFloat,
+        waveHorRadius: CGFloat,
+        waveVertRadius: CGFloat,
+        sideWidth: CGFloat,
+        isRTL: Bool
+    ) {
         self.waveCenterY = waveCenterY
         self.waveHorRadius = waveHorRadius
         self.waveVertRadius = waveVertRadius
         self.sideWidth = sideWidth
         super.init()
+        if isRTL {
+            setAffineTransform(.init(scaleX: -1, y: 1))
+        }
     }
     
     func updatePath() {

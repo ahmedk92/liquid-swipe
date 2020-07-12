@@ -64,8 +64,8 @@ open class LiquidSwipeContainerController: UIViewController {
     private var animating: Bool = false
     private var duration: CFTimeInterval = 0.8
     
-    private var rightEdgeGesture = UIScreenEdgePanGestureRecognizer()
-    private var leftEdgeGesture = UIScreenEdgePanGestureRecognizer()
+    private var trailingEdgeGesture = UIScreenEdgePanGestureRecognizer()
+    private var leadingEdgeGesture = UIScreenEdgePanGestureRecognizer()
     
     private var csBtnNextLeading: NSLayoutConstraint?
     private var csBtnNextCenterY: NSLayoutConstraint?
@@ -91,14 +91,14 @@ open class LiquidSwipeContainerController: UIViewController {
     }
     
     private func configureGestures() {
-        rightEdgeGesture.addTarget(self, action: #selector(rightEdgePan))
-        rightEdgeGesture.edges = .right
-        view.addGestureRecognizer(rightEdgeGesture)
+        trailingEdgeGesture.addTarget(self, action: #selector(trailingEdgePan))
+        trailingEdgeGesture.edges = view.trailingEdge
+        view.addGestureRecognizer(trailingEdgeGesture)
         
-        leftEdgeGesture.addTarget(self, action: #selector(leftEdgePan))
-        leftEdgeGesture.edges = .left
-        view.addGestureRecognizer(leftEdgeGesture)
-        leftEdgeGesture.isEnabled = false
+        leadingEdgeGesture.addTarget(self, action: #selector(leadingEdgePan))
+        leadingEdgeGesture.edges = view.leadingEdge
+        view.addGestureRecognizer(leadingEdgeGesture)
+        leadingEdgeGesture.isEnabled = false
     }
     
     private func animate(view: UIView, forProgress progress: CGFloat, waveCenterY: CGFloat? = nil) {
@@ -137,7 +137,7 @@ open class LiquidSwipeContainerController: UIViewController {
     private var shouldFinish: Bool = false
     private var shouldCancel: Bool = false
     private var animationProgress: CGFloat = 0.0
-    @objc private func rightEdgePan(_ sender: UIPanGestureRecognizer) {
+    @objc private func trailingEdgePan(_ sender: UIPanGestureRecognizer) {
         guard !animating else {
             return
         }
@@ -162,7 +162,7 @@ open class LiquidSwipeContainerController: UIViewController {
                 let direction: CGFloat = (gesture.location(in: view).y - mask.waveCenterY).sign == .plus ? 1 : -1
                 let distance = min(CGFloat(time) * speed, abs(mask.waveCenterY - gesture.location(in: view).y))
                 let centerY = mask.waveCenterY + distance * direction
-                let change = -gesture.translation(in: view).x
+                let change = -gesture.translation(in: view).x.flipped(for: self.view)
                 let maxChange: CGFloat = self.view.bounds.width * (1.0/0.45)
                 if !(self.shouldFinish || self.shouldCancel) {
                     let progress: CGFloat = min(1.0, max(0, change / maxChange))
@@ -219,7 +219,7 @@ open class LiquidSwipeContainerController: UIViewController {
         }
     }
     
-    @objc private func leftEdgePan(_ sender: UIPanGestureRecognizer) {
+    @objc private func leadingEdgePan(_ sender: UIPanGestureRecognizer) {
         guard !animating else {
             return
         }
@@ -245,7 +245,7 @@ open class LiquidSwipeContainerController: UIViewController {
                 let direction: CGFloat = (gesture.location(in: view).y - mask.waveCenterY).sign == .plus ? 1 : -1
                 let distance = min(CGFloat(time) * speed, abs(mask.waveCenterY - gesture.location(in: view).y))
                 let centerY = mask.waveCenterY + distance * direction
-                let change = gesture.translation(in: view).x
+                let change = gesture.translation(in: view).x.flipped(for: self.view)
                 let maxChange: CGFloat = self.view.bounds.width
                 if !(self.shouldFinish || self.shouldCancel) {
                     let progress: CGFloat = min(1.0, max(0, 1 - change / maxChange))
@@ -389,7 +389,13 @@ open class LiquidSwipeContainerController: UIViewController {
         layoutPageView(firstPage)
 
         if pagesCount > 1 {
-            let maskLayer = WaveLayer(waveCenterY: initialWaveCenter, waveHorRadius: initialHorRadius, waveVertRadius: initialVertRadius, sideWidth: initialSideWidth)
+            let maskLayer = WaveLayer(
+                waveCenterY: initialWaveCenter,
+                waveHorRadius: initialHorRadius,
+                waveVertRadius: initialVertRadius,
+                sideWidth: initialSideWidth,
+                isRTL: self.view.isRTL
+            )
             apply(mask: maskLayer, on: firstPage)
         }
         currentViewController = firstVC
@@ -403,11 +409,13 @@ open class LiquidSwipeContainerController: UIViewController {
         previousViewController = currentViewController
         currentViewController = nextViewController
         currentPageIndex += 1
-        leftEdgeGesture.isEnabled = true
+        leadingEdgeGesture.isEnabled = true
         let maskLayer = WaveLayer(waveCenterY: initialWaveCenter,
                                   waveHorRadius: 0,
                                   waveVertRadius: initialVertRadius,
-                                  sideWidth: 0)
+                                  sideWidth: 0,
+                                  isRTL: self.view.isRTL
+        )
         if let currentPage = currentPage {
             apply(mask: maskLayer, on: currentPage)
         }
@@ -415,7 +423,7 @@ open class LiquidSwipeContainerController: UIViewController {
         setNeedsStatusBarAppearanceUpdate()
         guard nextViewController != nil else {
             btnNext.isHidden = true
-            rightEdgeGesture.isEnabled = false
+            trailingEdgeGesture.isEnabled = false
             if let viewController = currentViewController {
                 delegate?.liquidSwipeContainer(self, didFinishTransitionTo: viewController, transitionCompleted: true)
             }
@@ -457,17 +465,19 @@ open class LiquidSwipeContainerController: UIViewController {
         currentViewController = previousViewController
         currentPageIndex -= 1
         btnNext.isHidden = false
-        rightEdgeGesture.isEnabled = true
+        trailingEdgeGesture.isEnabled = true
         let maskLayer = WaveLayer(waveCenterY: initialWaveCenter,
                                   waveHorRadius: 0,
                                   waveVertRadius: maxVertRadius,
-                                  sideWidth: view.bounds.width)
+                                  sideWidth: view.bounds.width,
+                                  isRTL: self.view.isRTL
+        )
         configurePreviousPage()
         setNeedsStatusBarAppearanceUpdate()
         if let prevPage = previousViewController?.view {
             apply(mask: maskLayer, on: prevPage)
         } else {
-            leftEdgeGesture.isEnabled = false
+            leadingEdgeGesture.isEnabled = false
         }
         let startTime = CACurrentMediaTime()
         let duration: CFTimeInterval = 0.3
@@ -502,7 +512,7 @@ open class LiquidSwipeContainerController: UIViewController {
         let pagesCount = datasource.numberOfControllersInLiquidSwipeContainer(self)
         guard pagesCount > currentPageIndex + 1 else {
             nextViewController = nil
-            rightEdgeGesture.isEnabled = false
+            trailingEdgeGesture.isEnabled = false
             return
         }
         let nextVC = datasource.liquidSwipeContainer(self, viewControllerAtIndex: currentPageIndex + 1)
@@ -529,7 +539,7 @@ open class LiquidSwipeContainerController: UIViewController {
         let pagesCount = datasource.numberOfControllersInLiquidSwipeContainer(self)
         guard currentPageIndex > 0 && pagesCount > 0 else {
             previousViewController = nil
-            leftEdgeGesture.isEnabled = false
+            leadingEdgeGesture.isEnabled = false
             return
         }
         let previousVC = datasource.liquidSwipeContainer(self, viewControllerAtIndex: currentPageIndex - 1)
@@ -608,15 +618,25 @@ open class LiquidSwipeContainerController: UIViewController {
                 let hasNextPage = self.nextViewController != nil
                 let maskLayer = WaveLayer(waveCenterY: self.initialWaveCenter,
                                           waveHorRadius: hasNextPage ? self.initialHorRadius : 0,
-                                          waveVertRadius: self.initialVertRadius, sideWidth: hasNextPage ?self.initialSideWidth : 0)
+                                          waveVertRadius: self.initialVertRadius, sideWidth: hasNextPage ? self.initialSideWidth : 0,
+                                          isRTL: self.view.isRTL
+                )
                 self.apply(mask: maskLayer, on: currentPage)
             }
             if let nextPage = self.nextViewController?.view {
-                let maskLayer = WaveLayer(waveCenterY: self.initialWaveCenter, waveHorRadius: 0, waveVertRadius: self.initialVertRadius, sideWidth: 0)
+                let maskLayer = WaveLayer(waveCenterY: self.initialWaveCenter, waveHorRadius: 0, waveVertRadius: self.initialVertRadius, sideWidth: 0,
+                    isRTL: self.view.isRTL
+                )
                 self.apply(mask: maskLayer, on: nextPage)
             }
             if let prevPage = self.previousViewController?.view {
-                let maskLayer = WaveLayer(waveCenterY: self.initialWaveCenter, waveHorRadius: 0, waveVertRadius: self.initialVertRadius, sideWidth: prevPage.bounds.height)
+                let maskLayer = WaveLayer(
+                    waveCenterY: self.initialWaveCenter,
+                    waveHorRadius: 0,
+                    waveVertRadius: self.initialVertRadius,
+                    sideWidth: prevPage.bounds.height,
+                    isRTL: self.view.isRTL
+                )
                 self.apply(mask: maskLayer, on: prevPage)
             }
             self.csBtnNextCenterY?.constant = self.initialWaveCenter
@@ -711,5 +731,26 @@ private extension LiquidSwipeContainerController {
             return view.bounds.width
         }
         return initialSideWidth + (view.bounds.width - initialSideWidth) * (progress - p1)/(p2 - p1)
+    }
+}
+
+private extension UIView {
+    var leadingEdge: UIRectEdge {
+        isRTL ? .right : .left
+    }
+    var trailingEdge: UIRectEdge {
+        isRTL ? .left : .right
+    }
+    var isRTL: Bool {
+        if #available(iOS 10.0, *) {
+            return effectiveUserInterfaceLayoutDirection == .rightToLeft
+        } else {
+            return false
+        }}
+}
+
+private extension FloatingPoint {
+    func flipped(for view: UIView) -> Self {
+        view.isRTL ? -self : self
     }
 }

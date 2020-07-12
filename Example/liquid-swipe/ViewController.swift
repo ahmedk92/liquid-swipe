@@ -38,6 +38,8 @@ class ViewController: LiquidSwipeContainerController, LiquidSwipeContainerDataSo
     }()
     
     override func viewDidLoad() {
+        // Uncomment for testing RTL
+//        view.semanticContentAttribute = .forceRightToLeft
         super.viewDidLoad()
         datasource = self
     }
