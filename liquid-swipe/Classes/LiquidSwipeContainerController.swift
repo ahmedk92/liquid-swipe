@@ -21,6 +21,10 @@ public protocol LiquidSwipeContainerDelegate {
 
 open class LiquidSwipeContainerController: UIViewController {
     
+    public func advance() {
+        btnTapped(btnNext)
+    }
+    
     public var datasource: LiquidSwipeContainerDataSource? {
         didSet {
             configureInitialState()
