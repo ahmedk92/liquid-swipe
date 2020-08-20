@@ -17,6 +17,7 @@ public protocol LiquidSwipeContainerDataSource {
 public protocol LiquidSwipeContainerDelegate {
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, willTransitionTo: UIViewController)
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, didFinishTransitionTo: UIViewController, transitionCompleted: Bool)
+    func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, currentPageIndexChangedTo index: Int)
 }
 
 open class LiquidSwipeContainerController: UIViewController {
@@ -25,13 +26,26 @@ open class LiquidSwipeContainerController: UIViewController {
         btnTapped(btnNext)
     }
     
+    public var btnNextImage: UIImage? {
+        get {
+            btnNext.image(for: btnNext.state)
+        }
+        set {
+            btnNext.setImage(newValue, for: btnNext.state)
+        }
+    }
+    
     public var datasource: LiquidSwipeContainerDataSource? {
         didSet {
             configureInitialState()
         }
     }
     public var delegate: LiquidSwipeContainerDelegate?
-    public private(set) var currentPageIndex: Int = 0
+    public private(set) var currentPageIndex: Int = 0 {
+        didSet {
+            delegate?.liquidSwipeContainer(self, currentPageIndexChangedTo: currentPageIndex)
+        }
+    }
     private var currentPage: UIView? {
         return currentViewController?.view
     }
@@ -42,7 +56,6 @@ open class LiquidSwipeContainerController: UIViewController {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .clear
-        button.setImage(UIImage(named: "btnNext.png", in: Bundle.resourseBundle, compatibleWith: nil), for: .normal)
         return button
     }()
     
@@ -81,6 +94,7 @@ open class LiquidSwipeContainerController: UIViewController {
     override open func viewDidLoad() {
         super.viewDidLoad()
         configureBtnNext()
+        currentPageIndex = { currentPageIndex }()
         configureGestures()
         configureInitialState()
     }
