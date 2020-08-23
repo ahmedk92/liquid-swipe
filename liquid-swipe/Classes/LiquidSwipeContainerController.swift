@@ -18,6 +18,7 @@ public protocol LiquidSwipeContainerDelegate {
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, willTransitionTo: UIViewController)
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, didFinishTransitionTo: UIViewController, transitionCompleted: Bool)
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, currentPageIndexChangedTo index: Int)
+    func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, canPanBackAtIndex index: Int) -> Bool
 }
 
 open class LiquidSwipeContainerController: UIViewController {
@@ -238,6 +239,11 @@ open class LiquidSwipeContainerController: UIViewController {
     }
     
     @objc private func leadingEdgePan(_ sender: UIPanGestureRecognizer) {
+        if let delegate = delegate {
+            if !delegate.liquidSwipeContainer(self, canPanBackAtIndex: currentPageIndex) {
+                return
+            }
+        }
         guard !animating else {
             return
         }
