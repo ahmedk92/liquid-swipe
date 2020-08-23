@@ -9,12 +9,12 @@
 import UIKit
 import pop
 
-public protocol LiquidSwipeContainerDataSource {
+public protocol LiquidSwipeContainerDataSource: AnyObject {
     func numberOfControllersInLiquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController) -> Int
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, viewControllerAtIndex index: Int) -> UIViewController
 }
 
-public protocol LiquidSwipeContainerDelegate {
+public protocol LiquidSwipeContainerDelegate: AnyObject {
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, willTransitionTo: UIViewController)
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, didFinishTransitionTo: UIViewController, transitionCompleted: Bool)
     func liquidSwipeContainer(_ liquidSwipeContainer: LiquidSwipeContainerController, currentPageIndexChangedTo index: Int)
@@ -23,7 +23,7 @@ public protocol LiquidSwipeContainerDelegate {
 
 open class LiquidSwipeContainerController: UIViewController {
     
-    public func advance() {
+    open func advance() {
         btnTapped(btnNext)
     }
     
@@ -36,12 +36,12 @@ open class LiquidSwipeContainerController: UIViewController {
         }
     }
     
-    public var datasource: LiquidSwipeContainerDataSource? {
+    public weak var datasource: LiquidSwipeContainerDataSource? {
         didSet {
             configureInitialState()
         }
     }
-    public var delegate: LiquidSwipeContainerDelegate?
+    public weak var delegate: LiquidSwipeContainerDelegate?
     public private(set) var currentPageIndex: Int = 0 {
         didSet {
             delegate?.liquidSwipeContainer(self, currentPageIndexChangedTo: currentPageIndex)
