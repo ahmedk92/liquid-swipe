@@ -27,6 +27,120 @@ open class LiquidSwipeContainerController: UIViewController {
         btnTapped(btnNext)
     }
     
+    open func goBack() {
+        if let delegate = delegate {
+            if !delegate.liquidSwipeContainer(self, canPanBackAtIndex: currentPageIndex) {
+                return
+            }
+        }
+        shouldCancel = false
+        shouldFinish = false
+        animating = true
+        previousViewController?.view.isHidden = false
+        if let viewController = previousViewController {
+            delegate?.liquidSwipeContainer(self, willTransitionTo: viewController)
+        }
+        let previousViewAnimation = POPCustomAnimation { (target, animation) -> Bool in
+            guard
+                let view = target as? UIView,
+                let mask = view.layer.mask as? WaveLayer,
+                let time = animation?.elapsedTime else {
+                    if let nextViewController = self.nextViewController {
+                        self.delegate?.liquidSwipeContainer(self, didFinishTransitionTo: nextViewController, transitionCompleted: false)
+                    }
+                    return false
+            }
+            let speed: CGFloat = 2000
+            let direction: CGFloat = -1
+            let distance = min(CGFloat(time) * speed, 0)
+            let centerY = mask.waveCenterY + distance * direction
+            let change = view.bounds.maxX.flipped(for: self.view)
+            let maxChange: CGFloat = self.view.bounds.width
+            if !(self.shouldFinish || self.shouldCancel) {
+                let progress: CGFloat = min(1.0, max(0, 1 - change / maxChange))
+                self.animateBack(view: view, forProgress: progress, waveCenterY: centerY)
+                self.shouldFinish = true
+                self.shouldCancel = false
+                self.animationProgress = progress
+                self.animationStartTime = CACurrentMediaTime()
+            }
+            let cTime = (animation?.currentTime ?? CACurrentMediaTime()) - (self.animationStartTime ?? CACurrentMediaTime())
+            if self.shouldFinish {
+                let progress = self.animationProgress - CGFloat(cTime/self.duration)
+                let direction: CGFloat = (self.initialWaveCenter - mask.waveCenterY).sign == .plus ? 1 : -1
+                let distance = min(CGFloat(time) * speed, abs(self.initialWaveCenter - mask.waveCenterY))
+                let centerY = mask.waveCenterY + distance * direction
+                self.animateBack(view: view, forProgress: progress, waveCenterY: centerY)
+                self.animating = progress >= 0 || abs(self.initialWaveCenter - mask.waveCenterY) > 0.01
+                return self.animating
+            } else if self.shouldCancel {
+                let progress = CGFloat(cTime/self.duration)
+                self.animateBack(view: view, forProgress: progress)
+                self.animating = progress <= 1.0
+                return self.animating
+            } else {
+                return false
+            }
+        }
+        previousViewAnimation?.completionBlock = { (animation, isFinished) in
+            self.animating = false
+            if self.shouldFinish {
+                self.showPreviousPage()
+            }
+            if self.shouldCancel,
+                let viewController = self.previousViewController {
+                viewController.view.isHidden = true
+                self.delegate?.liquidSwipeContainer(self, didFinishTransitionTo: viewController, transitionCompleted: false)
+            }
+        }
+        if let mask = previousViewController?.view?.layer.mask as? WaveLayer {
+            mask.frame = self.view.bounds
+            mask.updatePath()
+        }
+        previousViewController?.view.pop_add(previousViewAnimation, forKey: "animation")
+        guard nextViewController != nil else {
+            return
+        }
+        let startTime = CACurrentMediaTime()
+        var cancelTime: CFTimeInterval?
+        let currentViewAnimation = POPCustomAnimation { (target, animation) -> Bool in
+            guard
+                let view = target as? UIView,
+                let mask = view.layer.mask as? WaveLayer,
+                let time = animation?.currentTime else {
+                    return false
+            }
+            let duration: CGFloat = 0.3
+            if !self.shouldCancel {
+                let progress: CGFloat = 1.0 - min(1.0, max(0, CGFloat(time - startTime) / duration))
+                mask.sideWidth = self.initialSideWidth * progress
+                mask.waveHorRadius = self.initialHorRadius * progress
+                self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
+                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+                mask.updatePath()
+            }
+            if self.shouldFinish {
+                return self.animating
+            } else if self.shouldCancel {
+                if cancelTime == nil {
+                    cancelTime = CACurrentMediaTime()
+                }
+                let progress = min(1.0, max(0, CGFloat(time - (cancelTime ?? CACurrentMediaTime())) / duration))
+                mask.sideWidth = self.initialSideWidth * progress
+                mask.waveHorRadius = self.initialHorRadius * progress
+                self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
+                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+                self.btnNext.layoutIfNeeded()
+                mask.updatePath()
+                return progress < 1.0
+            } else {
+                return self.animating
+            }
+        }
+        currentPage?.pop_add(currentViewAnimation, forKey: "animation")
+
+    }
+    
     public var btnNextImage: UIImage? {
         get {
             btnNext.image(for: btnNext.state)
