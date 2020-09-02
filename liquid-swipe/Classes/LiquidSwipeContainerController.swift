@@ -116,7 +116,7 @@ open class LiquidSwipeContainerController: UIViewController {
                 mask.sideWidth = self.initialSideWidth * progress
                 mask.waveHorRadius = self.initialHorRadius * progress
                 self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
                 mask.updatePath()
             }
             if self.shouldFinish {
@@ -129,7 +129,7 @@ open class LiquidSwipeContainerController: UIViewController {
                 mask.sideWidth = self.initialSideWidth * progress
                 mask.waveHorRadius = self.initialHorRadius * progress
                 self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//                self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
                 self.btnNext.layoutIfNeeded()
                 mask.updatePath()
                 return progress < 1.0
@@ -456,7 +456,7 @@ open class LiquidSwipeContainerController: UIViewController {
                     mask.sideWidth = self.initialSideWidth * progress
                     mask.waveHorRadius = self.initialHorRadius * progress
                     self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-                    self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//                    self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
                     mask.updatePath()
                     switch gesture.state {
                     case .began, .changed:
@@ -475,7 +475,7 @@ open class LiquidSwipeContainerController: UIViewController {
                     mask.sideWidth = self.initialSideWidth * progress
                     mask.waveHorRadius = self.initialHorRadius * progress
                     self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-                    self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//                    self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
                     self.btnNext.layoutIfNeeded()
                     mask.updatePath()
                     return progress < 1.0
@@ -585,7 +585,7 @@ open class LiquidSwipeContainerController: UIViewController {
             mask.updatePath()
             self.btnNext.alpha = progress
             self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-            self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//            self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
             self.btnNext.layoutIfNeeded()
             return progress <= 1.0
         }
@@ -631,7 +631,7 @@ open class LiquidSwipeContainerController: UIViewController {
             let progress = CGFloat(cTime/duration)
             self.btnNext.alpha = progress
             self.csBtnNextLeading?.constant = -(mask.waveHorRadius + mask.sideWidth - 8.0)
-            self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
+//            self.btnNext.transform = CGAffineTransform(scaleX: progress, y: progress)
             self.btnNext.layoutIfNeeded()
             return progress <= 1.0
         }
@@ -780,7 +780,7 @@ open class LiquidSwipeContainerController: UIViewController {
             self.csBtnNextCenterY?.constant = self.initialWaveCenter
             self.csBtnNextLeading?.constant = -(self.initialHorRadius + self.initialSideWidth - 8.0)
             self.btnNext.isHidden = btnNextWasHidden
-            self.btnNext.transform = CGAffineTransform.identity
+//            self.btnNext.transform = CGAffineTransform.identity
             self.view.layoutIfNeeded()
         }
         super.viewWillTransition(to: size, with: coordinator)
